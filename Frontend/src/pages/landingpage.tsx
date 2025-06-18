@@ -2,8 +2,20 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Zap, Brain, Code, Sparkles } from "lucide-react"
+import { useNavigate } from 'react-router-dom';
 
-export default function LandingPage() {
+import { useState } from "react"
+export function LandingPage() {
+
+  const [prompt,setQuery] = useState('');
+  const navigate = useNavigate()
+
+  const onsubmit = ()=>{
+      if (prompt.trim()) {
+        navigate('/build', { state: { prompt } });
+    }
+
+  }
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -50,10 +62,14 @@ export default function LandingPage() {
         <div className="w-full max-w-3xl mb-8">
           <div className="flex gap-3 p-2 bg-white rounded-2xl shadow-lg border">
             <Input
+              id="query"
+              value={prompt}
+              onChange={(e) => setQuery(e.target.value)}
               placeholder="Describe the website you want to build..."
               className="flex-1 border-0 text-lg placeholder:text-gray-400 focus-visible:ring-0 focus-visible:ring-offset-0"
             />
-            <Button className="bg-purple-600 hover:bg-purple-700 px-8 py-3 rounded-xl">
+            <Button className="bg-purple-600 hover:bg-purple-700 px-8 py-3 rounded-xl"
+            onClick={onsubmit}>
               <Sparkles className="w-4 h-4 mr-2" />
               Create
             </Button>

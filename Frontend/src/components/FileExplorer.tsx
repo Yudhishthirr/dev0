@@ -1,12 +1,14 @@
 import { ChevronDown, ChevronRight, FileText, Folder, FolderOpen } from "lucide-react"
 
 import { useState } from "react"
+import { MonococodeEditor } from "./mocoCodeEditor"
+import { Separator } from "@radix-ui/react-separator"
 
 interface FileNode {
   name: string
   type: "file" | "folder"
   children?: FileNode[]
-  lines?: number
+  code?: string
   isOpen?: boolean
 }
 
@@ -24,7 +26,12 @@ export function FileExplorer({ files, level = 0 }: { files: FileNode[]; level?: 
     setOpenFolders(newOpenFolders)
   }
 
+  const [code,setCode] = useState("");
+
+  console.log(code)
   return (
+    <>
+    <div className="w-80 bg-gray-900 border-r border-gray-700 overflow-y-auto">
     <div className="text-sm">
       {files.map((file, index) => (
         <div key={index}>
@@ -47,9 +54,15 @@ export function FileExplorer({ files, level = 0 }: { files: FileNode[]; level?: 
                 )}
               </>
             )}
-            {file.type === "file" && <FileText className="w-4 h-4 mr-2 ml-5 text-gray-400" />}
-            <span className="text-gray-300 flex-1">{file.name}</span>
-            {file.lines && <span className="text-green-400 text-xs font-mono">+{file.lines}</span>}
+            {file.type === "file" &&  <FileText className="w-4 h-4 mr-2 ml-5 text-gray-400" />}
+
+
+            {/* {file.type === "file" && <><span className="text-gray-300 flex-1" onClick={() => setCode(file.code ?? "")}>{file.name}</span></>} */}
+
+            
+             <span className="text-gray-300 flex-1" onClick={() => setCode(file.code ?? "")}>{file.name}</span>
+
+            {/* {file.lines && <span  className="text-green-400 text-xs font-mono">+{file.lines}</span>} */}
           </div>
           {file.type === "folder" && file.children && openFolders.has(file.name) && (
             <FileExplorer files={file.children} level={level + 1} />
@@ -57,5 +70,9 @@ export function FileExplorer({ files, level = 0 }: { files: FileNode[]; level?: 
         </div>
       ))}
     </div>
+    </div>
+    <Separator orientation="vertical" className="bg-gray-700" />
+    <MonococodeEditor code={code}/>
+    </>
   )
 }
