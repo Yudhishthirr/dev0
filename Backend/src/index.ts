@@ -19,8 +19,9 @@ app.post("/template", async(req, res) => {
     }
     
     const response = await EnrichPrompt(prompt);
+    // return response
     // console.log(response)
-    res.json({data:response})
+    res.json({response})
     
 });
 
@@ -33,7 +34,7 @@ app.post("/chat", async(req, res) => {
     
     const response = await ChatMessage(message);
     // console.log(response)
-    res.json({data:response})
+    res.json({response})
     
 });
 

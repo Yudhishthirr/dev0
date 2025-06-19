@@ -37,7 +37,7 @@ const EnrichPrompt = async (prompt: { prompt: string }) => {
     const finalPromot = await promptTemplate.invoke({ prompt: prompt});
     const response =await Model.invoke(finalPromot)
 
-    console.log(`here is response of ai ${response}`)
+    // console.log(`here is response of ai ${response}`)
 
     const answer = response.content;
 
@@ -66,7 +66,7 @@ const ChatMessage = async (message: { message: string }) => {
     if (!message) {
         return 'message is required';
     }
-    console.log(message)
+    // console.log(message)
     
     const promptTemplate = ChatPromptTemplate.fromMessages([
         ["system", escapeBraces(getSystemPrompt())],
@@ -74,7 +74,7 @@ const ChatMessage = async (message: { message: string }) => {
     ]);
 
     const finalPromot = await promptTemplate.invoke({ message: message});
-    console.log(finalPromot);
+    // console.log(finalPromot);
     const response =await Model.invoke(finalPromot)
     return response;
    
