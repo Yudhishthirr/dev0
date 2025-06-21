@@ -14,7 +14,7 @@ import { BACKEND_URL } from '@/constant'
 // import { useWebContainer } from '../hooks/useWebcontainners'
 
 import { parseBoltArtifact2 } from "../lib/newparesed"
-
+import {downloadCodeFile} from "../lib/downloadCodeFile"
 // import { convertToWebContainerFS } from '@/lib/convertdata'
 
 type FileNode = {
@@ -53,11 +53,16 @@ export function Build() {
 
   const location = useLocation();
   
+
   const [fileStructure, setFileStructure] = useState<FileNode[]>([]);
   const [activeTab, setActiveTab] = useState<"preview" | "code">("code")
   const navigate = useNavigate()
   const { prompt = "" } = (location.state ?? {}) as { prompt?: string };
   
+  function handleDownload(){
+      
+      downloadCodeFile(fileStructure)
+  }
   const init = async () => {
 
     if(!prompt){
@@ -116,7 +121,7 @@ export function Build() {
     
 
   }
-
+  
   const handlepreview = ()=>{
       console.log("button clicked");
       localStorage.setItem('files', JSON.stringify(fileStructure));   
@@ -160,7 +165,7 @@ export function Build() {
               </Button>
             </div>
           </div>
-          <Button variant="ghost" size="icon" className="w-6 h-6 text-gray-400 hover:text-gray-200">
+          <Button variant="ghost" size="icon" className="w-6 h-6 text-gray-400 hover:text-gray-200"  onClick={handleDownload}>
             <Download className="w-4 h-4" />
           </Button>
         </div>
