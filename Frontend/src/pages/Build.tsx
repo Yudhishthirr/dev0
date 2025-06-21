@@ -5,15 +5,17 @@ import { Button } from '../components/ui/button'
 import { FileExplorer } from '../components/FileExplorercopy'
 import { Separator } from '@radix-ui/react-separator'
 
+import { useNavigate } from 'react-router-dom';
+
 import { useEffect, useState } from 'react'
 import { useLocation } from 'react-router-dom';
 
 import { BACKEND_URL } from '@/constant'
-import { useWebContainer } from '../hooks/useWebcontainners'
-import { WebContainer } from '@webcontainer/api';
+// import { useWebContainer } from '../hooks/useWebcontainners'
+
 import { parseBoltArtifact2 } from "../lib/newparesed"
-import { PreviewFrame } from '@/components/PreviewFrame'
-import { convertToWebContainerFS } from '@/lib/convertdata'
+
+// import { convertToWebContainerFS } from '@/lib/convertdata'
 
 type FileNode = {
   name: string;
@@ -50,10 +52,10 @@ type FileNode = {
 export function Build() {
 
   const location = useLocation();
-  const webcontainer = useWebContainer()
+  
   const [fileStructure, setFileStructure] = useState<FileNode[]>([]);
   const [activeTab, setActiveTab] = useState<"preview" | "code">("code")
-
+  const navigate = useNavigate()
   const { prompt = "" } = (location.state ?? {}) as { prompt?: string };
   
   const init = async () => {
@@ -72,10 +74,10 @@ export function Build() {
     setFileStructure(structure)
     
 
-    const files = convertToWebContainerFS(fileStructure);
+    // const files = convertToWebContainerFS(fileStructure);
 
   
-    webcontainer?.mount(files);
+    
    
     const airesponse = await axios.post(`${BACKEND_URL}/chat`, {
       message: [...prompts, prompt].map(content => ({
@@ -115,6 +117,11 @@ export function Build() {
 
   }
 
+  const handlepreview = ()=>{
+      console.log("button clicked");
+      localStorage.setItem('files', JSON.stringify(fileStructure));   
+      navigate('/preview');
+  }
 
   useEffect(() => {
     init()
@@ -136,7 +143,7 @@ export function Build() {
                 variant={activeTab === "preview" ? "secondary" : "ghost"}
                 size="sm"
                 className="text-xs px-3 py-1"
-                onClick={() => setActiveTab("preview")}
+                onClick={handlepreview}
               >
                 Preview
               </Button>
