@@ -12,10 +12,10 @@ export function LandingPage() {
 
   const onsubmit = ()=>{
       if (prompt.trim()) {
-        navigate('/build', { state: { prompt } });
+        navigate(`/build?prompt=${encodeURIComponent(prompt)}`);
     }
-
   }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}

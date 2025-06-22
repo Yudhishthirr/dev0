@@ -50,7 +50,7 @@ export const PreviewPage = () => {
     <div className="h-full w-full flex items-center justify-center text-gray-400">
       {!url && (
         <div className="text-center">
-          <p className="mb-2">Loading WebContainer...</p>
+          <p className="mb-2">Initializing project environment. This may take a moment...</p>
         </div>
       )}
       {url && (

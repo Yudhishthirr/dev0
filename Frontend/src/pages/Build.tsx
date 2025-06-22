@@ -5,26 +5,26 @@ import { Button } from '../components/ui/button'
 import { FileExplorer } from '../components/FileExplorercopy'
 import { Separator } from '@radix-ui/react-separator'
 
-import { useNavigate } from 'react-router-dom';
+import { convertToWebContainerFS } from '@/lib/convertdata'
 
 import { useEffect, useState } from 'react'
 import { useLocation } from 'react-router-dom';
 
 import { BACKEND_URL } from '@/constant'
-// import { useWebContainer } from '../hooks/useWebcontainners'
 
+import {PreviewFrame} from "../components/PreviewFrame"
 import { parseBoltArtifact2 } from "../lib/newparesed"
 import {downloadCodeFile} from "../lib/downloadCodeFile"
-// import { convertToWebContainerFS } from '@/lib/convertdata'
+import { MonococodeEditor } from '@/components/mocoCodeEditor'
 
-type FileNode = {
-  name: string;
-  type: "file" | "folder";
-  code?: string;
-  isOpen?: boolean;
-  children?: FileNode[];
-};
-
+import { useWebContainer } from '@/hooks/useWebcontainners'
+interface FileNode {
+  name: string
+  type: "file" | "folder"
+  children?: FileNode[]
+  code?: string
+  isOpen?: boolean
+}
 
 
 // const fileStructure: FileNode[] = [
@@ -52,86 +52,90 @@ type FileNode = {
 export function Build() {
 
   const location = useLocation();
-  
+  const queryParams = new URLSearchParams(location.search);
+  const prompt = queryParams.get('prompt');
+  console.log("here is prompt");
 
+  console.log(prompt)
+  if(!prompt){
+      console.log("Prompt is not defined")
+      return null
+  }
+
+  const [selectedFile, setSelectedFile] = useState("")
   const [fileStructure, setFileStructure] = useState<FileNode[]>([]);
+  const [isFileStructureUpdated,setIsFileStrucutreUpdated] = useState<boolean>(false)
   const [activeTab, setActiveTab] = useState<"preview" | "code">("code")
-  const navigate = useNavigate()
-  const { prompt = "" } = (location.state ?? {}) as { prompt?: string };
+  
+  const webcontainer = useWebContainer();
   
   function handleDownload(){
-      
-      downloadCodeFile(fileStructure)
+      if(isFileStructureUpdated){
+        downloadCodeFile(fileStructure)
+      }
+      return null;
+  }
+  function handlepreview(){
+    
+    setActiveTab("preview");
+    const webcontainerfiles =  convertToWebContainerFS(fileStructure)
+    webcontainer?.mount(webcontainerfiles);
+
   }
   const init = async () => {
-
-    if(!prompt){
-        return null;
-    }
-    const response = await axios.post(`${BACKEND_URL}/template`, { prompt });
-
-    const responseText = response.data.response.uiPrompts[0];
+    try{
+          const response = await axios.post(`${BACKEND_URL}/template`, { prompt });
+          const responseText = response.data.response.uiPrompts[0];
+          const prompts = response.data.response.prompts;
+          const structure = parseBoltArtifact2({ responseText });
+      
+          setFileStructure(structure)
+      
     
-  
-    const prompts = response.data.response.prompts;
-    const structure = parseBoltArtifact2({ responseText });
-    
-    setFileStructure(structure)
-    
-
-    // const files = convertToWebContainerFS(fileStructure);
-
-  
-    
-   
-    const airesponse = await axios.post(`${BACKEND_URL}/chat`, {
-      message: [...prompts, prompt].map(content => ({
-        role: "user",
-        content
-      }))
-    }
-    );
-    const newrespone = airesponse.data.response.kwargs.content
-  
-
-    const structure2 = parseBoltArtifact2({ responseText: newrespone });
-    setFileStructure(prev => {
-      return prev.map(item => {
-        if (item.name === 'src' && item.type === 'folder') {
-          // Get the new `src` from updated structure
-          const newSrc = structure2.find(f => f.name === 'src' && f.type === 'folder');
-
-          if (!newSrc || !newSrc.children) return item;
-
-          // Keep these files from old src
-          const filesToKeep = (item.children || []).filter(child =>
-            ['index.css', 'main.tsx', 'vite-env.d.ts'].includes(child.name)
+          const airesponse = await axios.post(`${BACKEND_URL}/chat`, {
+              message: [...prompts, prompt].map(content => ({
+                role: "user",
+                content
+              }))
+            }
           );
+          const newrespone = airesponse.data.response.kwargs.content
+      
 
-          // Merge: old files to keep + new files
-          return {
-            ...item,
-            children: [...filesToKeep, ...newSrc.children],
-          };
-        }
+          const structure2 = parseBoltArtifact2({ responseText: newrespone });
+          setFileStructure(prev => {
+            return prev.map(item => {
+              if (item.name === 'src' && item.type === 'folder') {
+                // Get the new `src` from updated structure
+                const newSrc = structure2.find(f => f.name === 'src' && f.type === 'folder');
 
-        return item;
-      });
-    });
-    
+                if (!newSrc || !newSrc.children) return item;
 
-  }
-  
-  const handlepreview = ()=>{
-      console.log("button clicked");
-      localStorage.setItem('files', JSON.stringify(fileStructure));   
-      navigate('/preview');
-  }
+                // Keep these files from old src
+                const filesToKeep = (item.children || []).filter(child =>
+                  ['index.css', 'main.tsx', 'vite-env.d.ts'].includes(child.name)
+                );
 
+                // Merge: old files to keep + new files
+                return {
+                  ...item,
+                  children: [...filesToKeep, ...newSrc.children],
+                };
+              }
+
+              return item;
+            });
+          });
+          setIsFileStrucutreUpdated(true)
+
+      }
+      catch (error) {
+          console.log(`something went worng while api calling may be prompt not defied of rendering error ${error}`)
+      }
+    }
   useEffect(() => {
-    init()
+    init() 
   },[prompt])
-
   return (
     <>
 
@@ -148,6 +152,7 @@ export function Build() {
                 variant={activeTab === "preview" ? "secondary" : "ghost"}
                 size="sm"
                 className="text-xs px-3 py-1"
+                // disabled={!isFileStructureUpdated}
                 onClick={handlepreview}
               >
                 Preview
@@ -165,7 +170,7 @@ export function Build() {
               </Button>
             </div>
           </div>
-          <Button variant="ghost" size="icon" className="w-6 h-6 text-gray-400 hover:text-gray-200"  onClick={handleDownload}>
+          <Button variant="ghost" size="icon" className="w-6 h-6 text-gray-400 hover:text-gray-200" disabled={!isFileStructureUpdated}  onClick={handleDownload}>
             <Download className="w-4 h-4" />
           </Button>
         </div>
@@ -173,11 +178,28 @@ export function Build() {
 
         <div className="flex flex-1 overflow-hidden">
 
-          <FileExplorer files={fileStructure} />
+          <FileExplorer files={fileStructure}  onFileSelect={setSelectedFile}/>
 
           <Separator orientation="vertical" className="bg-gray-700" />
 
+          {
+              isFileStructureUpdated && activeTab === "code" ? <MonococodeEditor code={selectedFile}/>
+              : activeTab === "preview" ? <PreviewFrame webContainer={webcontainer}/> :  <div className="flex justify-center items-center h-[800px] w-[80%]">
+             <span className="text-white text-lg font-medium tracking-wide">Generating your project files, please wait...</span>
+              </div>
+          }
 
+           {/* {
+              isFileStructureUpdated && activeTab === "code" ? <MonococodeEditor code={selectedFile}/>
+              : activeTab === "preview" ?  <iframe
+              src={"https://www.google.com"}
+              height="800px"
+              width="80%"
+              sandbox="allow-scripts allow-same-origin"
+              /> :  <div className="flex justify-center items-center h-[800px] w-[80%]">
+             <span className="text-white text-lg font-medium tracking-wide">Generating your project files, please wait...</span>
+              </div>
+          } */}
         </div>
       </div>
 
