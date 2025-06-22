@@ -17,7 +17,8 @@ import { parseBoltArtifact2 } from "../lib/newparesed"
 import {downloadCodeFile} from "../lib/downloadCodeFile"
 import { MonococodeEditor } from '@/components/mocoCodeEditor'
 
-import { useWebContainer } from '@/hooks/useWebcontainners'
+import { WebContainer } from '@webcontainer/api';
+
 interface FileNode {
   name: string
   type: "file" | "folder"
@@ -25,29 +26,6 @@ interface FileNode {
   code?: string
   isOpen?: boolean
 }
-
-
-// const fileStructure: FileNode[] = [
-//   {
-//     name: "src",
-//     type: "folder",
-//     isOpen: true,
-//     children: [
-//       { name: "app.tsx", type: "file", lines: 51 },
-//       { name: "index.css", type: "file", lines: 51 },
-//       { name: "main.tsx", type: "file", lines: 51 },
-//       { name: "vite-env.d.ts", type: "file", lines: 51 },
-//     ],
-//   },
-
-//   { name: "eslint.config.js", type: "file", lines: 64 },
-//   { name: "index.html", type: "file", lines: 64 },
-//   { name: "package.json", type: "file", lines: 64 },
-//   { name: "postcss.config.js", type: "file", lines: 64 },
-//   { name: "tsconfig.json", type: "file", lines: 64 },
-//   { name: "tsconfig.node.json", type: "file", lines: 64 },
-//   { name: "vite.config.ts", type: "file", lines: 64 },
-// ]
 
 export function Build() {
 
@@ -66,8 +44,8 @@ export function Build() {
   const [fileStructure, setFileStructure] = useState<FileNode[]>([]);
   const [isFileStructureUpdated,setIsFileStrucutreUpdated] = useState<boolean>(false)
   const [activeTab, setActiveTab] = useState<"preview" | "code">("code")
+  const [url, setUrl] = useState("");
   
-  const webcontainer = useWebContainer();
   
   function handleDownload(){
       if(isFileStructureUpdated){
@@ -75,11 +53,39 @@ export function Build() {
       }
       return null;
   }
+
+
+  async function previewwebconter(){
+
+      console.log("booting....")
+      const webcontainerInstance = await WebContainer.boot();
+      const webcontainerfiles =  convertToWebContainerFS(fileStructure)
+      await webcontainerInstance.mount(webcontainerfiles);
+
+      const installProcess = await webcontainerInstance.spawn('npm', ['install']);
+      installProcess.output.pipeTo(new WritableStream({
+        write(data) {
+          console.log(`[npm install]: ${data}`);
+        }
+      }));
+
+      const installExitCode = await installProcess.exit;
+      if (installExitCode !== 0) {
+          throw new Error('npm install failed');
+      }
+
+      await webcontainerInstance.spawn('npm', ['run', 'dev']);
+
+      webcontainerInstance.on('server-ready', (port, url) => {
+          console.log("Dev server running at:", url);
+          setUrl(url);
+      });
+  }
   function handlepreview(){
     
     setActiveTab("preview");
-    const webcontainerfiles =  convertToWebContainerFS(fileStructure)
-    webcontainer?.mount(webcontainerfiles);
+    previewwebconter()
+    
 
   }
   const init = async () => {
@@ -152,7 +158,7 @@ export function Build() {
                 variant={activeTab === "preview" ? "secondary" : "ghost"}
                 size="sm"
                 className="text-xs px-3 py-1"
-                // disabled={!isFileStructureUpdated}
+                disabled={!isFileStructureUpdated}
                 onClick={handlepreview}
               >
                 Preview
@@ -184,22 +190,10 @@ export function Build() {
 
           {
               isFileStructureUpdated && activeTab === "code" ? <MonococodeEditor code={selectedFile}/>
-              : activeTab === "preview" ? <PreviewFrame webContainer={webcontainer}/> :  <div className="flex justify-center items-center h-[800px] w-[80%]">
+              : activeTab === "preview" ? <PreviewFrame url={url}/> :  <div className="flex justify-center items-center h-[800px] w-[80%]">
              <span className="text-white text-lg font-medium tracking-wide">Generating your project files, please wait...</span>
               </div>
           }
-
-           {/* {
-              isFileStructureUpdated && activeTab === "code" ? <MonococodeEditor code={selectedFile}/>
-              : activeTab === "preview" ?  <iframe
-              src={"https://www.google.com"}
-              height="800px"
-              width="80%"
-              sandbox="allow-scripts allow-same-origin"
-              /> :  <div className="flex justify-center items-center h-[800px] w-[80%]">
-             <span className="text-white text-lg font-medium tracking-wide">Generating your project files, please wait...</span>
-              </div>
-          } */}
         </div>
       </div>
 
