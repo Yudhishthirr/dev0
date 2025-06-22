@@ -13,7 +13,6 @@ function App() {
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/build" element={<Build />} />
-        <Route path="/preview" element={<PreviewPage />} />
       </Routes>
     </BrowserRouter>
   )
