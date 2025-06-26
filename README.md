@@ -30,7 +30,7 @@ Dev0 Build websites or backend services instantly using just a natural language 
 > Coming Soon! (You can add your screenshots here showing prompt input and code output.)
 ## 📸 Screenshot
 
-![App Screenshot](./frontend/screenshot.png)
+![App Screenshot](./frontend/preview.png)
 
 ---
 
