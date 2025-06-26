@@ -28,6 +28,9 @@ Dev0 Build websites or backend services instantly using just a natural language 
 ## 📸 Screenshots
 
 > Coming Soon! (You can add your screenshots here showing prompt input and code output.)
+## 📸 Screenshot
+
+![App Screenshot](./frontend/screenshot.png)
 
 ---
 
