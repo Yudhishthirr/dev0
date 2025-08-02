@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import {LandingPage} from "./pages/landingpage"
+// import {LandingPage} from "./pages/landingpage"
 import {Build} from "./pages/Build"
 import { FuturisticWebsite } from './pages/newlanding';
 
