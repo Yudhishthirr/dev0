@@ -1,6 +1,3 @@
-
-
-
 export function PreviewFrame({ url }: any) {
   
   return (
